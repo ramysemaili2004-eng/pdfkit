@@ -1,60 +1,66 @@
-export function generateFooter(doc, invoice) {
-  const { notes, termsAndConditions, footer } = invoice;
+import { PAGE_WIDTH, MARGIN, CONTENT_WIDTH, drawBorder } from '../../utils/format.js';
 
-  const startY = doc.y + 30;
-  const leftX = 50;
-  const rightX = 330;
-  const width = 235;
+export function generateFooter(doc, data) {
+  let currentY = doc.y;
 
-  // Top divider line
-  doc
-    .moveTo(50, startY)
-    .lineTo(545, startY)
-    .stroke();
+  // Summary section
+  const summaryHeight = 50;
+  drawBorder(doc, MARGIN, currentY, CONTENT_WIDTH, summaryHeight);
 
-  // Notes (left)
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(9)
-    .text('Notes:', leftX, startY + 8);
+  let yPos = currentY + 5;
+  doc.fontSize(8).font('Helvetica')
+    .text(`TOTAL B/F`, MARGIN + 5, yPos)
+    .text(data.totals.totalQuantityPcs.toString(), MARGIN + 300, yPos)
+    .text(data.totals.itemsTotalUSD.toFixed(2), MARGIN + 400, yPos, { align: 'right' });
 
-  doc
-    .font('Helvetica')
-    .fontSize(9)
-    .text(notes, leftX, startY + 22, {
-      width
-    });
+  yPos += 12;
+  doc.text(`ADD : INSPECTION CHARGES US $`, MARGIN + 5, yPos)
+    .text(data.totals.inspectionChargesUSD.toFixed(2), MARGIN + 400, yPos, { align: 'right' });
 
-  // Terms & Conditions (right)
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(9)
-    .text('Terms and Conditions:', rightX, startY + 8);
+  yPos += 12;
+  doc.fontSize(9).font('Helvetica-Bold')
+    .text(`TOTAL FOB US $`, MARGIN + 5, yPos)
+    .text(data.totals.totalFOBUSD.toFixed(2), MARGIN + 400, yPos, { align: 'right' });
 
-  doc
-    .font('Helvetica')
-    .fontSize(9)
-    .text(termsAndConditions, rightX, startY + 22, {
-      width
-    });
+  yPos += 12;
+  doc.fontSize(7).font('Helvetica-Bold')
+    .text(`FOB US $ ${data.totals.amountInWords}`, MARGIN + 5, yPos);
 
-  // Bottom section
-  const bottomY = startY + 80;
+  currentY += summaryHeight;
 
-  // Page info + digitally signed text
-  doc
-    .fontSize(8)
-    .text(`Page ${footer.page}`, leftX, bottomY);
+  // Declaration section
+  const declarationHeight = 60;
+  drawBorder(doc, MARGIN, currentY, CONTENT_WIDTH, declarationHeight);
 
-  doc
-    .text('This is a digitally signed document.', leftX, bottomY + 12);
+  yPos = currentY + 5;
+  doc.fontSize(7).font('Helvetica-Bold')
+    .text('Declaration:', MARGIN + 5, yPos);
 
-  // Signature (right aligned)
-  doc
-    .font('Helvetica-Bold')
-    .fontSize(9)
-    .text(footer.signature, rightX, bottomY + 20, {
-      width,
-      align: 'right'
-    });
+  yPos += 10;
+  doc.fontSize(7).font('Helvetica')
+    .text(data.declaration.text, MARGIN + 5, yPos, { width: CONTENT_WIDTH - 10 });
+
+  yPos += 20;
+  doc.fontSize(8).font('Helvetica-Bold')
+    .text(`FOR ${data.exporter.name}`, MARGIN + 5, yPos);
+
+  yPos += 20;
+  doc.fontSize(7).font('Helvetica')
+    .text('Signature & Date', MARGIN + 5, yPos)
+    .text('Auth. Signatory', MARGIN + 5, yPos + 10);
+
+  currentY += declarationHeight;
+
+  // Final notes
+  yPos = currentY + 5;
+  doc.fontSize(7).font('Helvetica-Bold')
+    .text(`"WE INTEND TO CLAIM REWARDS UNDER ${data.declaration.rewardScheme} SCHEME"`, MARGIN + 5, yPos)
+    .text(`SUBJECT TO ${data.declaration.jurisdiction} JURISDICTION ONLY`, MARGIN + 5, yPos + 10);
+
+  // Weight information
+  doc.fontSize(7).font('Helvetica')
+    .text(`Net Weight ${data.shipment.netWeightKg}`, PAGE_WIDTH - MARGIN - 150, yPos)
+    .text(`Gross Weight ${data.shipment.grossWeightKg}`, PAGE_WIDTH - MARGIN - 150, yPos + 10);
+
+  return currentY;
 }

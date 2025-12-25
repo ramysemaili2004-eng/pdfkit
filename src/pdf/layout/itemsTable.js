@@ -1,112 +1,85 @@
-export function generateItemsTable(doc, invoice) {
-  const { items, summary } = invoice;
+import { PAGE_WIDTH, MARGIN, CONTENT_WIDTH, drawBorder, drawLine, PAGE_HEIGHT } from '../../utils/format.js';
 
-  const startX = 50;
-  let startY = 360; // below buyer/shipping section
-  const rowHeight = 22;
-  const bottomMargin = 750; // page bottom limit
+export function generateItemsTable(doc, data) {
+  let currentY = doc.y;
 
-  const columns = [
-    { label: '#', key: 'srNo', width: 30, align: 'left' },
-    { label: 'Item', key: 'description', width: 150, align: 'left' },
-    { label: 'HSN/SAC', key: 'hsnSac', width: 60, align: 'left' },
-    { label: 'Tax', key: 'taxRate', width: 40, align: 'right' },
-    { label: 'Qty', key: 'quantity', width: 35, align: 'right' },
-    { label: 'Rate', key: 'rate', width: 60, align: 'right' },
-    { label: 'Per', key: 'unit', width: 40, align: 'left' },
-    { label: 'Amount', key: 'totalAmount', width: 80, align: 'right' }
-  ];
+  // Table header
+  const headerHeight = 20;
+  const col1Width = 280;
+  const col2Width = 60;
+  const col3Width = 60;
+  const col4Width = CONTENT_WIDTH - col1Width - col2Width - col3Width;
 
-  function drawTableHeader(y) {
-    let x = startX;
+  drawBorder(doc, MARGIN, currentY, CONTENT_WIDTH, headerHeight);
+  drawLine(doc, MARGIN + col1Width, currentY, MARGIN + col1Width, currentY + headerHeight);
+  drawLine(doc, MARGIN + col1Width + col2Width, currentY, MARGIN + col1Width + col2Width, currentY + headerHeight);
+  drawLine(doc, MARGIN + col1Width + col2Width + col3Width, currentY, MARGIN + col1Width + col2Width + col3Width, currentY + headerHeight);
 
-    doc.font('Helvetica-Bold').fontSize(9);
+  // Header labels
+  let yPos = currentY + 3;
+  doc.fontSize(7).font('Helvetica-Bold')
+    .text('Description of Goods', MARGIN + 2, yPos, { width: col1Width - 4, align: 'center' })
+    .text('Quantity', MARGIN + col1Width + 2, yPos, { width: col2Width - 4, align: 'center' })
+    .text('Rate', MARGIN + col1Width + col2Width + 2, yPos, { width: col3Width - 4, align: 'center' })
+    .text('Amount', MARGIN + col1Width + col2Width + col3Width + 2, yPos, { width: col4Width - 4, align: 'center' });
 
-    columns.forEach(col => {
-      doc.rect(x, y, col.width, rowHeight).stroke();
-      doc.text(col.label, x + 4, y + 6, {
-        width: col.width - 8,
-        align: col.align
-      });
-      x += col.width;
-    });
+  doc.fontSize(6).font('Helvetica')
+    .text('Buyer Code    Mfg #    OCN #', MARGIN + 2, yPos + 10, { width: col1Width - 4 })
+    .text('PCS / SET', MARGIN + col1Width + 2, yPos + 10, { width: col2Width - 4, align: 'center' })
+    .text('US $', MARGIN + col1Width + col2Width + 2, yPos + 10, { width: col3Width - 4, align: 'center' })
+    .text('US $', MARGIN + col1Width + col2Width + col3Width + 2, yPos + 10, { width: col4Width - 4, align: 'center' });
 
-    doc.font('Helvetica').fontSize(9);
-  }
+  currentY += headerHeight;
 
-  function drawRow(row, y) {
-    let x = startX;
-
-    columns.forEach(col => {
-      doc.rect(x, y, col.width, rowHeight).stroke();
-
-      let value = row[col.key];
-
-      if (col.key === 'taxRate') value = `${value}%`;
-      if (typeof value === 'number') value = value.toFixed(2);
-
-      doc.text(String(value ?? ''), x + 4, y + 6, {
-        width: col.width - 8,
-        align: col.align
-      });
-
-      x += col.width;
-    });
-  }
-
-  // Initial header
-  drawTableHeader(startY);
-  startY += rowHeight;
-
-  // Rows with pagination
-  items.forEach(item => {
-    if (startY + rowHeight > bottomMargin) {
+  // Table rows
+  const rowHeight = 30;
+  data.items.forEach((item, index) => {
+    if (currentY + rowHeight > PAGE_HEIGHT - MARGIN - 100) {
       doc.addPage();
-      startY = 50;
-      drawTableHeader(startY);
-      startY += rowHeight;
+      currentY = MARGIN + 20;
     }
 
-    drawRow(item, startY);
-    startY += rowHeight;
+    drawBorder(doc, MARGIN, currentY, CONTENT_WIDTH, rowHeight);
+    drawLine(doc, MARGIN + col1Width, currentY, MARGIN + col1Width, currentY + rowHeight);
+    drawLine(doc, MARGIN + col1Width + col2Width, currentY, MARGIN + col1Width + col2Width, currentY + rowHeight);
+    drawLine(doc, MARGIN + col1Width + col2Width + col3Width, currentY, MARGIN + col1Width + col2Width + col3Width, currentY + rowHeight);
+
+    yPos = currentY + 2;
+    doc.fontSize(7).font('Helvetica-Bold')
+      .text(item.description, MARGIN + 2, yPos, { width: col1Width - 4 });
+    
+    doc.fontSize(6).font('Helvetica')
+      .text(`(36x36x1)`, MARGIN + 2, yPos + 9)
+      .text(`HSN: ${item.hsn}`, MARGIN + 2, yPos + 17);
+
+    doc.fontSize(7)
+      .text(`${item.buyerCode}    ${item.articleCode}`, MARGIN + 2, yPos + 25);
+
+    doc.fontSize(8).font('Helvetica')
+      .text(`PCS ${item.quantityPcs}`, MARGIN + col1Width + 2, yPos + 12, { width: col2Width - 4, align: 'center' })
+      .text(item.rateUSD.toFixed(2), MARGIN + col1Width + col2Width + 2, yPos + 12, { width: col3Width - 4, align: 'center' })
+      .text(item.amountUSD.toFixed(2), MARGIN + col1Width + col2Width + col3Width + 2, yPos + 12, { width: col4Width - 4, align: 'right' });
+
+    doc.fontSize(6).font('Helvetica')
+      .text(item.poNumber, MARGIN + 2, currentY + rowHeight - 8);
+
+    currentY += rowHeight;
   });
 
-  // Totals section
-  startY += 15;
+  // Total row
+  const totalRowHeight = 15;
+  drawBorder(doc, MARGIN, currentY, CONTENT_WIDTH, totalRowHeight);
+  drawLine(doc, MARGIN + col1Width, currentY, MARGIN + col1Width, currentY + totalRowHeight);
+  drawLine(doc, MARGIN + col1Width + col2Width, currentY, MARGIN + col1Width + col2Width, currentY + totalRowHeight);
+  drawLine(doc, MARGIN + col1Width + col2Width + col3Width, currentY, MARGIN + col1Width + col2Width + col3Width, currentY + totalRowHeight);
 
-  if (startY + 60 > bottomMargin) {
-    doc.addPage();
-    startY = 50;
-  }
+  yPos = currentY + 4;
+  doc.fontSize(8).font('Helvetica-Bold')
+    .text('TOTAL C/F', MARGIN + 2, yPos)
+    .text(data.totals.totalQuantityPcs.toString(), MARGIN + col1Width + 2, yPos, { width: col2Width - 4, align: 'center' })
+    .text(data.totals.itemsTotalUSD.toFixed(2), MARGIN + col1Width + col2Width + col3Width + 2, yPos, { width: col4Width - 4, align: 'right' });
 
-  const labelX = 330;
-  const valueX = 430;
-  const valueWidth = 115;
+  currentY += totalRowHeight;
 
-  doc.font("Helvetica-Bold").fontSize(9);
-
-  doc.text("Taxable Amount", labelX, startY);
-  doc.text(`₹${summary.taxableAmount.toFixed(2)}`, valueX, startY, {
-    width: valueWidth,
-    align: "right",
-  });
-
-  startY += 14;
-
-  doc.text("IGST", labelX, startY);
-  doc.text(`₹${summary.totalIGST.toFixed(2)}`, valueX, startY, {
-    width: valueWidth,
-    align: "right",
-  });
-
-  startY += 18;
-
-  doc.fontSize(10);
-  doc.text("Total", labelX, startY);
-  doc.text(`₹${summary.grandTotal.toFixed(2)}`, valueX, startY, {
-    width: valueWidth,
-    align: "right",
-  });
-
-  doc.font("Helvetica").fontSize(9);
+  return currentY;
 }
