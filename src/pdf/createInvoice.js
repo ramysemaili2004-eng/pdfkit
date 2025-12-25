@@ -2,8 +2,8 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 
-import { drawExportHeaderBoxes } from './layout/header.js';
-import { generateBuyerShipping } from './layout/buyerSeller.js';
+import { drawBuyerRight, drawConsigneeLeft, drawExportHeaderBoxes, drawLogisticsGridLeft, drawNotifyLeft, drawOriginDestinationRight, drawTermsOfDeliveryRight } from './layout/header.js';
+// import { generateBuyerShipping } from './layout/buyerSeller.js';
 import { generateItemsTable } from './layout/itemsTable.js';
 import { generateFooter } from './layout/footer.js';
 import { drawInvoiceHeading } from './layout/heading.js';
@@ -38,6 +38,12 @@ export function createInvoice(invoiceData) {
 
   drawInvoiceHeading(doc, "EXPORT INVOICE");
   drawExportHeaderBoxes(doc, invoiceData);
+  drawConsigneeLeft(doc, invoiceData);
+  drawBuyerRight(doc, invoiceData);
+  drawNotifyLeft(doc, invoiceData);
+  drawOriginDestinationRight(doc, invoiceData);
+  drawLogisticsGridLeft(doc, invoiceData);
+  drawTermsOfDeliveryRight(doc, invoiceData);
   // generateBuyerShipping(doc, invoiceData);
   // generateItemsTable(doc, invoiceData);
   // generateFooter(doc, invoiceData);

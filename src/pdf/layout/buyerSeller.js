@@ -1,6 +1,6 @@
 import { PAGE_WIDTH, MARGIN, CONTENT_WIDTH, drawBorder, drawLine } from '../../utils/format.js';
 
-export function generateBuyerShipping(doc, data) {
+export function drawConsigneeHeaderBox(doc, data) {
   let currentY = doc.y;
 
   // Buyer section
